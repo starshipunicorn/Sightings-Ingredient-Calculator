@@ -3,8 +3,8 @@ import sqlite3
 import streamlit as st
 
 # Function to connect to the databasedefget_db_connection():
-    conn = sqlite3.connect('food_and_drink.db')
-    return conn
+conn = sqlite3.connect('food_and_drink.db')
+return conn
 
 # Function to create the database and populate it if it doesn't existdefsetup_database():
     ifnot os.path.exists('food_and_drink.db'):
