@@ -214,4 +214,52 @@ if recipe_name:
     conn = get_db_connection()
     c = conn.cursor()
     c.execute('''
-        SELECT r.name
+        SELECT r.name, i.name, ri.quantity
+        FROM Recipes r
+        JOIN RecipeIngredients ri ON r.recipe_id = ri.recipe_id
+        JOIN Ingredients i ON ri.ingredient_id = i.ingredient_id
+        WHERE r.name LIKE ?
+    ''', ('%' + recipe_name + '%',))
+    results = c.fetchall()
+    conn.close()
+
+    if results:
+        st.subheader(f"Ingredients for {recipe_name}:")
+        for result in results:
+            st.write(f"{result[1]}: {result[2]}")
+    else:
+        st.write("No recipe found.")
+
+# Calculate Ingredients Section
+st.header('Calculate Total Ingredients for Orders')
+order_input = st.text_area('Enter orders (e.g., Andromeda Invader Curry,15):')
+if order_input:
+    orders = order_input.split('\n')
+    total_ingredients = {}
+    conn = get_db_connection()
+    c = conn.cursor()
+
+    for order in orders:
+        recipe, quantity = order.split(',')
+        quantity = int(quantity)
+        c.execute('''
+            SELECT i.name, ri.quantity
+            FROM Recipes r
+            JOIN RecipeIngredients ri ON r.recipe_id = ri.recipe_id
+            JOIN Ingredients i ON ri.ingredient_id = i.ingredient_id
+            WHERE r.name = ?
+        ''', (recipe,))
+        results = c.fetchall()
+
+        for result in results:
+            ingredient, qty = result[0], result[1]
+            qty_value = int(qty.split()[0])
+            if ingredient in total_ingredients:
+                total_ingredients[ingredient] += quantity * qty_value
+            else:
+                total_ingredients[ingredient] = quantity * qty_value
+
+    conn.close()
+    st.subheader("Total Ingredients Needed:")
+    for ingredient, total in total_ingredients.items():
+        st.write(f"{ingredient}: {total}")
